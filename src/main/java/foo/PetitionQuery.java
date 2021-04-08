@@ -42,28 +42,27 @@ public class PetitionQuery extends HttpServlet {
 		response.setCharacterEncoding("UTF-8");
 
 
-		response.getWriter().print("<h2> finall 5 PU where key > P0 </h2>");
 
+		response.getWriter().print("<h2> Great, get the next 50 results now </h2>");
+
+		
+        Query q = new Query("Petition");
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Key k = KeyFactory.createKey("PU", "P0");
-
-		Query q = new Query("PU").setFilter(new FilterPredicate(Entity.KEY_RESERVED_PROPERTY, FilterOperator.GREATER_THAN, k));
 
 		PreparedQuery pq = datastore.prepare(q);
-		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(5));
+		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(10));
 
 		response.getWriter().print("<li> result:" + result.size() + "<br>");
 		Entity last=null;
 		for (Entity entity : result) {
-			response.getWriter().print("<li>" + entity.getKey());
+			response.getWriter().print("<li>" + entity.getKey()+ "/" + entity.getProperty("owner"));
 			last=entity;
 		}
 
-		response.getWriter().print("<h2> Great, get the next 10 results now </h2>");
+		response.getWriter().print("<h2> petition sign by user200 </h2>");
 
-		
-		// One way to paginate...
-		q = new Query("PU").setFilter(new FilterPredicate("__key__", FilterOperator.GREATER_THAN, last.getKey()));
+		q = new Query("Petition").setFilter(new FilterPredicate("signatories", FilterOperator.EQUAL, "user200"));
+		datastore = DatastoreServiceFactory.getDatastoreService();
 
 		pq = datastore.prepare(q);
 		result = pq.asList(FetchOptions.Builder.withLimit(10));

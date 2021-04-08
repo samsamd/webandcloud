@@ -1,11 +1,8 @@
 package foo;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.Date;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -35,18 +32,26 @@ public class PetitionServlet extends HttpServlet {
 		response.setContentType("text/html");
 		response.setCharacterEncoding("UTF-8");
 
-		Random r = new Random();
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-		// Create users
-		for (int i = 0; i < 50; i++) {
-			for (int j = 0; j < 10; j++) {
-				Entity e = new Entity("PU", "P" + i + "_" + "U"+j);
-				e.setProperty("firstName", "My name is" + j);
-				e.setProperty("body", "Vote for my"+i+","+j);
-				datastore.put(e);
-				response.getWriter().print("<li> created post:" + e.getKey() + "<br>");
-			}
+		// Create petitions
+		for (int i = 0; i < 400; i++) {
+            Date date = new Date();
+            Entity e  = new Entity("Petition", Long.MAX_VALUE-(date).getTime() + "petition" + i);
+            e.setProperty("body", "ceci est la petitition" + i);
+            e.setProperty("owner", "user" + i);
+            e.setProperty("date", date);
+
+            // Create signatories
+            HashSet<String> s = new HashSet<>();
+            for (int j = 0; j < 300; j++){
+                s.add("user" + j);
+            }
+            e.setProperty("signatories", s);
+            e.setProperty("nbVote", s.size());
+
+            datastore.put(e);
+			response.getWriter().print("<li> created post:" + e.getKey() + "<br>");
 		}
 	}
 }
