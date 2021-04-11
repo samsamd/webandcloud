@@ -86,7 +86,7 @@ public class PetitionQuery extends HttpServlet {
 		response.getWriter().print("<li> result:" + result.size() + "<br>");
 		last=null;
 		for (Entity entity : result) {
-			response.getWriter().print("<li>" + entity.getKey()+ "/" + entity.getProperty("owner"));
+			response.getWriter().print("<li>" + entity.getKey()+ "/" + entity.getProperty("owner") + "/ nb signatures : " + entity.getProperty("nbSignatory"));
 			last=entity;
 		}
 		long t4=System.currentTimeMillis();	
