@@ -3,7 +3,7 @@ package foo;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Date;
-import java.util.Random
+import java.util.Random;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -46,7 +46,7 @@ public class PetitionServlet extends HttpServlet {
 
             // Create signatories
             HashSet<String> s = new HashSet<>();
-            int k = r.nextInt(1000)
+            int k = r.nextInt(1000);
             for (int j = 0; j < k; j++){
                 s.add("user" + j);
             }

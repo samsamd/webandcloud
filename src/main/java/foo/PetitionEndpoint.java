@@ -1,5 +1,6 @@
 package foo;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,8 +22,10 @@ import com.google.appengine.api.datastore.Cursor;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.PropertyProjection;
@@ -50,24 +53,24 @@ import com.google.appengine.api.datastore.Transaction;
 public class PetitionEndpoint {
 
     @ApiMethod(name = "addPetition", httpMethod=HttpMethod.POST)
-    public Entity addPetition(User owner, PostMessage pm) {
+    public Entity addPetition(User owner, PostMessage pm) throws UnauthorizedException {
         if (owner == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
 		
-		Date date = new Date(); // voir score endpoint clé
+		Date date = new Date(); 
 		Entity e = new Entity("Petition", "petition" + "/" + owner.getEmail());
 		e.setProperty("body", pm.body);
 		e.setProperty("owner", owner.getEmail());
 		e.setProperty("date", date);
 				
-		//crée des signataire
+		//cree des signataire
 		ArrayList<String> fset = new ArrayList<String>();
 		fset.add(owner.getEmail());
 		e.setProperty("signatory",fset);
 		e.setProperty("nbSignatory",305);
 				
-		//crée des tags
+		//creer des tags
 		HashSet<String> fset2 = new HashSet<String>();
 		e.setProperty("tag", fset2);
 				
@@ -78,7 +81,7 @@ public class PetitionEndpoint {
 		return e;
     }
 
-    //Récupérer les petitions signés par l'utilisateur
+    //Recuperer les petitions signes par l'utilisateur
     @ApiMethod(name = "getMyPetition", httpMethod = HttpMethod.GET)
 	public List<Entity> getMyPetition(@Named("owner") User owner) throws UnauthorizedException {
 		if (owner == null) {
@@ -92,7 +95,7 @@ public class PetitionEndpoint {
 		return result;
     }
     
-    //Récupère les 100 petitions avec le plus de signatures
+    //Recupere les 100 petitions avec le plus de signatures
     @ApiMethod(name = "getTopPetition", httpMethod = HttpMethod.GET)
 	public List<Entity> getTopPetition() {
 		Query q = new Query("Petition").addSort("nbSignatory", SortDirection.DESCENDING);
@@ -100,5 +103,29 @@ public class PetitionEndpoint {
 		PreparedQuery pq = datastore.prepare(q);
 		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(100));
 		return result;
-	}
+    }
+    
+    //Signer une petition
+		@ApiMethod(name = "signPetition", httpMethod = HttpMethod.POST)
+		public Entity signPetition(User user, PostMessage pm) throws UnauthorizedException {
+			if (user == null) {
+				throw new UnauthorizedException("Invalid credentials");
+			}
+			 DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+			///utiliser coutingSH pour implÃ©menter
+
+
+			Key lkey = KeyFactory.createKey("Petition", pm.body);
+			Entity ent = new Entity("Petition","hello");
+			try {
+				ent = datastore.get(lkey);
+				int nb =  Integer.parseInt(ent.getProperty("nbSignatory").toString());
+			    ent.setProperty("nbSignatory", nb + 1 );
+				datastore.put(ent);
+				return ent;
+			} catch (EntityNotFoundException e) {
+			// This should never happen
+			}
+			return ent;
+		}
 }

@@ -27,7 +27,7 @@ import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
-
+import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.repackaged.com.google.datastore.v1.CompositeFilter;
 import com.google.appengine.repackaged.com.google.datastore.v1.Projection;
 import com.google.appengine.repackaged.com.google.datastore.v1.PropertyFilter;
@@ -44,7 +44,7 @@ public class PetitionQuery extends HttpServlet {
 
 
 		response.getWriter().print("<h2> Great, get the next 10 results now </h2>");
-
+        long t1=System.currentTimeMillis();
 		
         Query q = new Query("Petition");
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
@@ -58,9 +58,8 @@ public class PetitionQuery extends HttpServlet {
 			response.getWriter().print("<li>" + entity.getKey()+ "/" + entity.getProperty("owner"));
 			last=entity;
 		}
-		long t2=System.currentTimeMillis();
-		response.getWriter().print("<h2> time(Q1) </h2>");		
-		response.getWriter().print("q1:"+(t2-t1)+"\n");
+		long t2=System.currentTimeMillis();	
+		response.getWriter().print("<br>temps d'exécution de la requête : " + (t2-t1) + "\n");
 
 		response.getWriter().print("<h2> petition sign by user200 </h2>");
 
@@ -76,23 +75,22 @@ public class PetitionQuery extends HttpServlet {
 			response.getWriter().print("<li>" + entity.getKey());
 			last=entity;
 		}
-		long t3=System.currentTimeMillis();
-		response.getWriter().print("<h2> time(Q2) </h2>");		
-		response.getWriter().print("q2:"+(t3-t2)+"\n");
+		long t3=System.currentTimeMillis();		
+		response.getWriter().print("<br>temps d'exécution de la requête : " +(t3-t2)+ "\n");
 
+        response.getWriter().print("<h2> Les 100 pétitions avec le plus de signatures</h2>");
 		q = new Query("Petition").addSort("nbSignatory", SortDirection.DESCENDING);
 		datastore = DatastoreServiceFactory.getDatastoreService();
 		pq = datastore.prepare(q);
-		result = pq.asList(FetchOptions.Builder.withLimit(10));
+		result = pq.asList(FetchOptions.Builder.withLimit(100));
 		response.getWriter().print("<li> result:" + result.size() + "<br>");
 		last=null;
 		for (Entity entity : result) {
 			response.getWriter().print("<li>" + entity.getKey()+ "/" + entity.getProperty("owner"));
 			last=entity;
 		}
-		long t4=System.currentTimeMillis();
-		response.getWriter().print("<h2> time(Q3) </h2>");		
-		response.getWriter().print("q3:"+(t4-t3)+"\n");
+		long t4=System.currentTimeMillis();	
+		response.getWriter().print("<br>temps d'exécution de la requête : "+(t4-t3)+"\n");
 		
 	}
 }

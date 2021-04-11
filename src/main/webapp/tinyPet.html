@@ -13,15 +13,15 @@
 	src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 
 
-<script src="https://unpkg.com/mithril/mithril.js"></script>
-
 </head>
 <body>
     <script>
 
+
     var createPetition = {
-        body =" ",
-        owner = "userTest",       
+        body ='',
+        owner = "userTest",
+        User : 'max',       
     }
 
     var NewPetitionView={
@@ -49,7 +49,7 @@
 	    loadList: function() {
 	        return m.request({
 	            method: "GET",
-	            url: "_ah/api/myApi/v1/toppetition/"
+	            url: "_ah/api/myApi/v1/getToppetition/"
 	        })
 	        .then(function(result) {
 	            Petition.listtop100 = result.items
@@ -59,7 +59,7 @@
 	    loadListOwner: function() {
 	        return m.request({
 	            method: "GET",
-	            url: "_ah/api/myApi/v1/MyPetition/"+'?access_token='+ encodeURIComponent(Petition.ID)
+	            url: "_ah/api/myApi/v1/getMyPetition/"+'?access_token='+ encodeURIComponent(Petition.ID)
 	        })
 	        .then(function(result) {
 	            Petition.listowner = result.items
@@ -71,7 +71,7 @@
 	    	var data={'body':body}
 	        return m.request({
 	            method: "POST",
-	            url: "_ah/api/myApi/v1/createPetition"+'?access_token='+encodeURIComponent(Petition.ID),
+	            url: "_ah/api/myApi/v1/addPetition"+'?access_token='+encodeURIComponent(Petition.ID),
 	            params: data,
 	        })
 	        .then(function(result) {
@@ -157,28 +157,7 @@ var Container = {
        ])
    }
 }
-function onSignIn(googleUser) {
-	  var petition = googleUser.getBasicProfile();
-	  Petition.ID = googleUser.getAuthResponse().id_token;
-	  m.route.set("/secret")
-	}
-var Login = {
-		  view: function() {
-		 	return m('div', {class:'container'}, [
-		      m("h1", {class: 'title'}, 'Tiny pet app'),
-		      m("div", {
-		      	   "class":"g-signin2",
-		      	   "data-onsuccess": "onSignIn"}),
-		      ])
-		    }
-		}
-m.route(document.body, "/secret", {
-	  "/secret": { onmatch: function() {
-	            	if (Petition.ID=="") {m.route.set("/login")}
-	            	else return Container
-	        		}},
-	  "/login": Login
-	})
+
     
     </script>
 </body>
