@@ -53,20 +53,20 @@ import com.google.appengine.api.datastore.Transaction;
 public class PetitionEndpoint {
 
     @ApiMethod(name = "addPetition", httpMethod=HttpMethod.POST)
-    public Entity addPetition(User owner, PostMessage pm) throws UnauthorizedException {
+    public Entity addPetition(String owner, PostMessage pm) throws UnauthorizedException {
         if (owner == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
 		
 		Date date = new Date(); 
-		Entity e = new Entity("Petition", "petition" + "/" + owner.getEmail());
+		Entity e = new Entity("Petition", "petition" + "/" + owner);
 		e.setProperty("body", pm.body);
-		e.setProperty("owner", owner.getEmail());
+		e.setProperty("owner", owner);
 		e.setProperty("date", date);
 				
 		//cree des signataire
 		ArrayList<String> fset = new ArrayList<String>();
-		fset.add(owner.getEmail());
+		fset.add(owner);
 		e.setProperty("signatory",fset);
 		e.setProperty("nbSignatory",305);
 				
@@ -83,11 +83,11 @@ public class PetitionEndpoint {
 
     //Recuperer les petitions signes par l'utilisateur
     @ApiMethod(name = "getMyPetition", httpMethod = HttpMethod.GET)
-	public List<Entity> getMyPetition(@Named("owner") User owner) throws UnauthorizedException {
+	public List<Entity> getMyPetition(@Named("owner") String owner) throws UnauthorizedException {
 		if (owner == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
-		Query q = new Query("Petition").setFilter(new FilterPredicate("signatory", FilterOperator.EQUAL, owner.getEmail()));
+		Query q = new Query("Petition").setFilter(new FilterPredicate("signatory", FilterOperator.EQUAL, owner;
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
 		PreparedQuery pq = datastore.prepare(q);
@@ -107,7 +107,7 @@ public class PetitionEndpoint {
     
     //Signer une petition
 		@ApiMethod(name = "signPetition", httpMethod = HttpMethod.POST)
-		public Entity signPetition(User user, PostMessage pm) throws UnauthorizedException {
+		public Entity signPetition(String user) throws UnauthorizedException {
 			if (user == null) {
 				throw new UnauthorizedException("Invalid credentials");
 			}

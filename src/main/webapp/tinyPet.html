@@ -12,20 +12,16 @@
 <script defer
     src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
     
-    <script src="https://unpkg.com/mithril/mithril.js"></script>
-	<meta name="google-signin-scope" content="profile email">
-	<meta name="google-signin-client_id" content="927375242383-t21v9ml38tkh2pr30m4hqiflkl3jfohl.apps.googleusercontent.com">
-	<script src="https://apis.google.com/js/platform.js" async defer></script>
-
 
 </head>
 <body>
     <script>
 
+    var user = "u200"
 
     var createPetition = {
         body:'',
-        owner:"userTest",
+        owner:'userTest',
         User : 'max',       
     }
 
@@ -64,7 +60,7 @@
 	    loadListOwner: function() {
 	        return m.request({
 	            method: "GET",
-	            url: "_ah/api/myApi/v1/getMyPetition/"+'?access_token='+ encodeURIComponent(Petition.ID)
+	            url: "_ah/api/myApi/v1/getMyPetition/"+me
 	        })
 	        .then(function(result) {
 	            Petition.listowner = result.items
@@ -76,7 +72,7 @@
 	    	var data={'body':body}
 	        return m.request({
 	            method: "POST",
-	            url: "_ah/api/myApi/v1/addPetition"+'?access_token='+encodeURIComponent(Petition.ID),
+	            url: "_ah/api/myApi/v1/addPetition"+me,
 	            params: data,
 	        })
 	        .then(function(result) {
@@ -90,7 +86,7 @@
 	    	var data={'body': key}
 	        return m.request({
 	            method: "POST",
-	            url: "_ah/api/myApi/v1/signPetition"+'?access_token='+encodeURIComponent(Petition.ID),
+	            url: "_ah/api/myApi/v1/signPetition"+me,
 	            params: data,
 	        })
 	        .then(function(result) {
@@ -105,7 +101,7 @@
   oninit: Petition.loadList,
   view: function() {
    	return m('div', [
-	  m('div',{class:'subtitle'},"Top 10 Petition"),
+	  m('div',{class:'subtitle'},"Top 100 Petition"),
 	  m('table', {class:'table is-striped'},[
 	    m('tr', [
 	      m('th', {width:"200px"}, "body"),
@@ -163,29 +159,8 @@ var Container = {
    }
 }
 
-function onSignIn(googleUser) {
-	  var petition = googleUser.getBasicProfile();
-	  Petition.ID = googleUser.getAuthResponse().id_token;
-	  m.route.set("/secret")
-	}
-var Login = {
-		  view: function() {
-		 	return m('div', {class:'container'}, [
-		      m("h1", {class: 'title'}, 'Tiny pet app'),
-		      m("div", {
-		      	   "class":"g-signin2",
-		      	   "data-onsuccess": "onSignIn"}),
-		      ])
-		    }
-		}
-
-m.route(document.body, "/secret", {
-	  "/secret": { onmatch: function() {
-	            	if (Petition.ID=="") {m.route.set("/login")}
-	            	else return Container
-	        		}},
-	  "/login": Login
-	})
-    
+m.mount(document.body, Container)
+   
     </script>
 </body>
+</html>
