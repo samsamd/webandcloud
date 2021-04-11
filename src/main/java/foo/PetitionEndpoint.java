@@ -87,7 +87,7 @@ public class PetitionEndpoint {
 		if (owner == null) {
 			throw new UnauthorizedException("Invalid credentials");
 		}
-		Query q = new Query("Petition").setFilter(new FilterPredicate("signatory", FilterOperator.EQUAL, owner;
+		Query q = new Query("Petition").setFilter(new FilterPredicate("signatory", FilterOperator.EQUAL, owner));
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
 		PreparedQuery pq = datastore.prepare(q);
@@ -107,7 +107,7 @@ public class PetitionEndpoint {
     
     //Signer une petition
 		@ApiMethod(name = "signPetition", httpMethod = HttpMethod.POST)
-		public Entity signPetition(String user) throws UnauthorizedException {
+		public Entity signPetition(String user, PostMessage pm) throws UnauthorizedException {
 			if (user == null) {
 				throw new UnauthorizedException("Invalid credentials");
 			}

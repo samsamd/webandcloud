@@ -60,7 +60,7 @@
 	    loadListOwner: function() {
 	        return m.request({
 	            method: "GET",
-	            url: "_ah/api/myApi/v1/getMyPetition/"+me
+	            url: "_ah/api/myApi/v1/getMyPetition/"+user
 	        })
 	        .then(function(result) {
 	            Petition.listowner = result.items
@@ -72,7 +72,7 @@
 	    	var data={'body':body}
 	        return m.request({
 	            method: "POST",
-	            url: "_ah/api/myApi/v1/addPetition"+me,
+	            url: "_ah/api/myApi/v1/addPetition"+user,
 	            params: data,
 	        })
 	        .then(function(result) {
@@ -86,7 +86,7 @@
 	    	var data={'body': key}
 	        return m.request({
 	            method: "POST",
-	            url: "_ah/api/myApi/v1/signPetition"+me,
+	            url: "_ah/api/myApi/v1/signPetition"+user,
 	            params: data,
 	        })
 	        .then(function(result) {
