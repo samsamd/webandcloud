@@ -7,41 +7,130 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 
-<link rel="stylesheet"
-	href="https://cdn.jsdelivr.net/npm/bulma@0.8.0/css/bulma.min.css">
-<script defer
-    src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+
+
+<script src="https://unpkg.com/mithril/mithril.js"></script>
+	<meta name="google-signin-scope" content="profile email">
+	<meta name="google-signin-client_id" content="53230070017-qglnlh23t1g8u04eqp9hogqpfqe2vj8o.apps.googleusercontent.com">
+    <script src="https://apis.google.com/js/platform.js"></script>
     
+ <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+ <style>
+     ul {
+		  list-style-type: none;
+		  margin: 0;
+		  padding: 0;
+		  overflow: hidden;
+		  background-color: #ffffff;
+		}
+		
+		li {
+		  float: left;
+		}
+		
+		li div {
+		  display: block;
+		  color: black;
+		  text-align: center;
+		  padding: 14px 16px;
+		  text-decoration: none;
+		}
+		
+     li div:hover {
+		  cursor : pointer;
+		}
+    .navbar-default {
+    background-color: #f8f8f8;
+    border-color: #e7e7e7;
+    }
+    .navbar-static-top {
+    z-index: 1000;
+    border-width: 0 0 1px;
+    }       
+ </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>   
 
 </head>
 <body>
     <script>
 
-    var user = "u200"
+var navbar={
+		view: function() {
+			return m('div', [
+				m('nav',{class:'navbar navbar-default navbar-static-top'},
+						m("ul",{class:"nav navbar-nav collapse navbar-collapse"},
+							m("li",{},
+							m("h1", {class: 'title'}, 'TinyPet')),
+							m("li",{},m('div',{onclick: function(e) {m.route.set("/new")}},"Créer une pétition")),
+							m("li",{},m('div',{
+								onclick: function(e) {
+									Petition.loadListOwner(),
+                                      m.route.set("/myPet")}},
+                                      "Les pétitions signées")),
+							m("li",{},m('div',{
+								onclick: function(e) {
+									Petition.loadList(),
+									m.route.set("/home")
+								}},
+								"Le top 100 des pétitions")),
+							m("li",{},m('div',{
+								onclick: function(e) {
+									gapi.auth2.getAuthInstance().signOut().then(function () {
+										console.log('User signed out.');
+							      		location.reload();
+							    	})
+							    }}
+								,"Déconnexion")),
+						)
+				),	
+			])
+		}
+}
 
-    var createPetition = {
-        body:'',
-        owner:'userTest',
-        User : 'max',       
-    }
-
+    var CreatePetition={
+  titre : ' ',
+  body : ' ',
+  owner : ' ',
+  User : ' ',
+ }
     var NewPetitionView={
 	    view: function() {
 		return m('div', [
-			m('div',{class:'subtitle'},"Add a petition"),
-			m("input[type=text][placeholder=name]", {
-				class: 'input is-rounded',
-				 oninput: function (e) {
-					 CreatePetition.body=e.target.value},
-				 }),
-			m('button',{
-				class: 'button is-link',
-				onclick: function(e) {Petition.save(CreatePetition.body,Petition.ID)}
-			    },"Submit"),
-		])
+			m("div", {},m(navbar)),
+	   			m('div',{class: 'tile is-ancestor'},[
+		   	        m("div", {class: 'tile'}, m('div',{class:'tile is-child box'},
+					m('div',{class:'subtitle'},"Créer une pétition"),
+					m("label",{for:"titre"},"Nom de la pétition :"),
+					m("input[type=text][placeholder=Titre]", {
+						class: 'input is-rounded',
+						id: 'titre',
+						 oninput: function (e) {
+							 CreatePetition.titre=e.target.value},
+                         }),
+                    m('br'),
+                    m("label",{for:"description"},"Description :"),
+                    m("input[type=text][placeholder=Description]", {
+						class: 'input is-rounded',
+						id: 'description',
+						 oninput: function (e) {
+							 CreatePetition.body=e.target.value},
+						 }),
+			        m('br'),
+					m('button',{
+						class: 'button',
+						onclick: function(e) {
+							if(document.getElementById('titre').value=="" || document.getElementById('description').value=="" ){
+								alert("Veuillez remplir tous les champs !");
+							}
+							else Petition.save();
+						}
+					},"Submit"),))
+                ])
+                    ])
 	    }	
     }
-
+    
     var Petition = {
 		ID:"",
 		nextToken:"",
@@ -50,7 +139,7 @@
 	    loadList: function() {
 	        return m.request({
 	            method: "GET",
-	            url: "_ah/api/myApi/v1/getToppetition/"
+	            url: "_ah/api/myApi/v1/entitycollection/"
 	        })
 	        .then(function(result) {
 	            Petition.listtop100 = result.items
@@ -60,39 +149,44 @@
 	    loadListOwner: function() {
 	        return m.request({
 	            method: "GET",
-	            url: "_ah/api/myApi/v1/getMyPetition/"+user
+	            url: "_ah/api/myApi/v1/collectionresponse_entity/"+'?access_token='+encodeURIComponent(Petition.ID)
 	        })
 	        .then(function(result) {
 	            Petition.listowner = result.items
 	        	console.log("got:",result.items)
 	        })
 	    },
-	    save: function(body) {
-	    	console.log("saving...",Petition.current)
-	    	var data={'body':body}
+	    save: function() {
+	    	console.log("saving...",CreatePetition.current)
+	    	var data={'titre': CreatePetition.titre,'body':CreatePetition.body}
 	        return m.request({
 	            method: "POST",
-	            url: "_ah/api/myApi/v1/addPetition"+user,
+	            url: "_ah/api/myApi/v1/addPetition"+'?access_token='+encodeURIComponent(Petition.ID),
 	            params: data,
 	        })
 	        .then(function(result) {
 	        	console.log("got:",result)
-	        	Petition.loadList()
-	        	Petition.loadListOwner(Petition.ID)
+	        	alert("Pétition créée...");
+	        	m.route.set("/home")
 	        })
 	    },
 	    sign: function(key) {
 	    	console.log("signing...",key)
-	    	var data={'body': key}
+	    	var data={'key': key}
 	        return m.request({
 	            method: "POST",
-	            url: "_ah/api/myApi/v1/signPetition"+user,
+	            url: "_ah/api/myApi/v1/signPetition"+'?access_token='+encodeURIComponent(Petition.ID),
 	            params: data,
 	        })
 	        .then(function(result) {
-	        	console.log("got:",result)
-	        	Petition.loadList()
-	        	Petition.loadListOwner(Petition.ID)
+	        	console.log("got:",result.key.name)
+	        	if(result.key.name == "false"){
+	        		alert("Vous venez de signer la pétition");
+	        	}
+	        	else{
+	        		alert("Vous avez déjà signé cette pétition");
+                }
+                m.route.set("/home")
 	        })
 	    },
     }
@@ -101,65 +195,87 @@
   oninit: Petition.loadList,
   view: function() {
    	return m('div', [
-	  m('div',{class:'subtitle'},"Top 100 Petition"),
+           m("div", {},m(navbar)),
+	  m('div',"Le top 100 des pétitions"),
 	  m('table', {class:'table is-striped'},[
 	    m('tr', [
-	      m('th', {width:"200px"}, "body"),
-	      m('th', {width:"50px"}, "nbSignatory"),
-	      m('th', {width:"30px"}, "sign?"),
+          m('th', {width:"300px"}, "propriétaire"),
+          m('th', {width:"300px"}, "titre"),
+          m('th', {width:"300px"}, "description"),
+	      m('th', {width:"150px"}, "nombre de signatures"),
+	      m('th', {width:"60px"}, "signer ?"),
 	    ]),
 	    Petition.listtop100.map(function(item) {
 	      return m("tr", [
-  	        m('td', m('label', item.properties.body)),
+            m('td', m('label', item.properties.owner)),
+            m('td', m('label', item.properties.titre)),
+            m('td', m('label', item.properties.body)),
 	        m('td', m('label', item.properties.nbSignatory)),
 	        m('button',{
 				class: 'button is-link',
-				onclick: function(e) {Petition.sign(item.key.name,Petition.ID)}},"sign"),
-	      ])
+				onclick: function(e) {Petition.sign(item.key.name,Petition.ID)}},"sign"), 
+            ])
 	    })
 	   ])
 	 ])
   }
 }
-var OwnerListPetitionView = {
-		  oninit: Petition.loadListOwner(Petition.ID),
+
+var UserListPetitionView = {
 		  view: function() {
 		   	return m('div', [
 			  m('div',{class:'subtitle'},"Petition signée par vous"),
 			  m('table', {class:'table is-striped'},[
 			    m('tr', [
-			      m('th', {width:"200px"}, "body"),
-			      m('th', {width:"50px"}, "nbSignatory"),
-			      m('th', {width:"30px"}, "sign?"),
+                  m('th', {width:"200px"}, "titre"),
+                  m('th', {width:"200px"}, "description"),
+			      m('th', {width:"50px"}, "nombre de signatures"),
 			    ]),
 			    Petition.listowner.map(function(item) {
 			      return m("tr", [
-		  	        m('td', m('label', item.properties.body)),
-			        m('td', m('label', item.properties.nbSignatory)),
-			        m('button',{
-						class: 'button is-link',
-						onclick: function(e) {
-							Petition.sign(item.key.name,Petition.ID)}},"sign"), 
+                      m('td', m('label', item.properties.titre)),
+                      m('td', m('label', item.properties.body)),
+			        m('td', m('label', item.properties.nbSignatory)), 
 			      ])
 			    })
 			   ])
 			 ])
 		  }
-		}
-var Container = {
-   view: function() {
-   	return m('div', {class:'container'}, [
-           m("h1", {class: 'title'}, 'TinyPet'),
-           m('div',{class: 'tile is-ancestor'},[
-               m("div", {class: 'tile'}, m('div',{class:'tile is-child box'},m(NewPetitionView))),
-               m("div", {class: 'tile'}, m('div',{class:'tile is-child box'},m(ListPetitionView))),
-               m("div", {class: 'tile'}, m('div',{class:'tile is-child box'},m(OwnerListPetitionView))),
-           ])
-       ])
-   }
+        } 
+
+function onSignIn(googleUser) {
+  var profile = googleUser.getBasicProfile();
+  Petition.ID=googleUser.getAuthResponse().id_token;
+  m.route.set("/home")
 }
 
-m.mount(document.body, Container)
+var Login = {
+  view: function() {
+ 	return m('div', {class:'container'}, [
+      m("h1", {class: 'title'}, 'TinyPet'),
+      m("div", {
+      	   "class":"g-signin2",
+      	   "data-theme":"dark",
+      	   "data-onsuccess": "onSignIn"}),
+      ])
+    }
+}
+m.route(document.body, "/home", {
+  "/home": { onmatch: function() {
+            	if (Petition.ID=="") {m.route.set("/login")}
+            	else return ListPetitionView
+                }},
+                "/new" : { onmatch: function(){
+		  if (Petition.ID=="") {m.route.set("/login")}
+      	  else return NewPetitionView
+      }},
+       "/myPet" : { onmatch: function(){
+		  if (Petition.ID=="") {m.route.set("/login")}
+      	  else return UserPetitionListView
+	  }},
+  "/login": Login
+}) 
+
    
     </script>
 </body>

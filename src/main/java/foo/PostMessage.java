@@ -2,8 +2,10 @@ package foo;
 
 public class PostMessage {
 	public String owner;
-	public String body;
-	public String url;
+    public String titre;
+    public String body;
+    public String url;
+    public String key;
 	
 	public PostMessage() {}
 }

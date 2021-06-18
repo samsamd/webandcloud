@@ -41,8 +41,8 @@ import com.google.appengine.api.datastore.Transaction;
 
 @Api(name = "myApi",
      version = "v1",
-     audiences = "927375242383-t21v9ml38tkh2pr30m4hqiflkl3jfohl.apps.googleusercontent.com",
-  	 clientIds = "927375242383-t21v9ml38tkh2pr30m4hqiflkl3jfohl.apps.googleusercontent.com",
+     audiences = "53230070017-qglnlh23t1g8u04eqp9hogqpfqe2vj8o.apps.googleusercontent.com",
+  	 clientIds = "53230070017-qglnlh23t1g8u04eqp9hogqpfqe2vj8o.apps.googleusercontent.com",
      namespace =
      @ApiNamespace(
 		   ownerDomain = "helloworld.example.com",
@@ -53,26 +53,23 @@ import com.google.appengine.api.datastore.Transaction;
 public class PetitionEndpoint {
 
     @ApiMethod(name = "addPetition", httpMethod=HttpMethod.POST)
-    public Entity addPetition(String owner, PostMessage pm) throws UnauthorizedException {
-        if (owner == null) {
-			throw new UnauthorizedException("Invalid credentials");
-		}
-		
+    public Entity addPetition(User owner, PostMessage pm) throws UnauthorizedException {
+		if (owner == null) {
+				throw new UnauthorizedException("Invalid credentials");
+			}
 		Date date = new Date(); 
-		Entity e = new Entity("Petition", "petition" + "/" + owner);
+        Entity e = new Entity("Petition", Long.MAX_VALUE-(date.getTime()) + "/" + owner.getEmail());
+        e.setProperty("titre",pm.titre);
 		e.setProperty("body", pm.body);
-		e.setProperty("owner", owner);
-		e.setProperty("date", date);
+        e.setProperty("owner", owner.getEmail());
+        e.setProperty("date", date);
 				
 		//cree des signataire
 		ArrayList<String> fset = new ArrayList<String>();
-		fset.add(owner);
+		fset.add(owner.getEmail());
 		e.setProperty("signatory",fset);
-		e.setProperty("nbSignatory",305);
+		e.setProperty("nbSignatory",1);
 				
-		//creer des tags
-		HashSet<String> fset2 = new HashSet<String>();
-		e.setProperty("tag", fset2);
 				
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Transaction txn = datastore.beginTransaction();
@@ -81,18 +78,21 @@ public class PetitionEndpoint {
 		return e;
     }
 
-    //Recuperer les petitions signes par l'utilisateur
-    @ApiMethod(name = "getMyPetition", httpMethod = HttpMethod.GET)
-	public List<Entity> getMyPetition(@Named("owner") String owner) throws UnauthorizedException {
-		if (owner == null) {
-			throw new UnauthorizedException("Invalid credentials");
-		}
-		Query q = new Query("Petition").setFilter(new FilterPredicate("signatory", FilterOperator.EQUAL, owner));
+    //Recuperer les petitions signees par l'utilisateur
+    @ApiMethod(name = "getMyPetitionsSign", httpMethod = HttpMethod.GET)
+	public CollectionResponse<Entity> getMyPetitionsSign(@Named("owner") User user) throws UnauthorizedException {
+		if (user == null) {
+				throw new UnauthorizedException("Invalid credentials");
+			}
+		Query q = new Query("Petition").setFilter(new FilterPredicate("signatory", FilterOperator.EQUAL, user.getEmail()));
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
-		PreparedQuery pq = datastore.prepare(q);
-		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(10));
-		return result;
+        PreparedQuery pq = datastore.prepare(q);
+        FetchOptions fetchOptions = FetchOptions.Builder.withLimit(5);
+
+        QueryResultList<Entity> results = pq.asQueryResultList(fetchOptions);
+
+		return CollectionResponse.<Entity>builder().setItems(results).build();
     }
     
     //Recupere les 100 petitions avec le plus de signatures
@@ -103,29 +103,43 @@ public class PetitionEndpoint {
 		PreparedQuery pq = datastore.prepare(q);
 		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(100));
 		return result;
-    }
-    
+    }  
+
     //Signer une petition
-		@ApiMethod(name = "signPetition", httpMethod = HttpMethod.POST)
-		public Entity signPetition(String user, PostMessage pm) throws UnauthorizedException {
-			if (user == null) {
+    @ApiMethod(name = "signPetition", httpMethod = HttpMethod.POST)
+    public Entity signPetition(User user, PostMessage pm ) throws UnauthorizedException {
+        if (user == null) {
 				throw new UnauthorizedException("Invalid credentials");
-			}
-			 DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-			///utiliser coutingSH pour implémenter
+            }
+        Entity isPetitionSign = new Entity("Petition","true");
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 
+        Key pkey = KeyFactory.createKey("Petition", pm.key);
+        Entity ent = new Entity("Petition","hello");
+        
+        Transaction txn=datastore.beginTransaction();
 
-			Key lkey = KeyFactory.createKey("Petition", pm.body);
-			Entity ent = new Entity("Petition","hello");
-			try {
-				ent = datastore.get(lkey);
+        try {
+				ent = datastore.get(pkey);
 				int nb =  Integer.parseInt(ent.getProperty("nbSignatory").toString());
-			    ent.setProperty("nbSignatory", nb + 1 );
+			    ArrayList<String> signatories = (ArrayList<String>) ent.getProperty("signatory");
+			    
+			    if(!signatories.contains(user.getEmail())) {
+			    	signatories.add(user.getEmail());
+			    	ent.setProperty("signatory", signatories);
+				    ent.setProperty("nbSignatory", nb + 1 );
+				    isPetitionSign = new Entity("Petition","false");
+				   }
 				datastore.put(ent);
-				return ent;
+				txn.commit();
 			} catch (EntityNotFoundException e) {
-			// This should never happen
+					e.printStackTrace();
+				}
+			  finally {
+				if (txn.isActive()) {
+				    txn.rollback();
+				  }
 			}
-			return ent;
-		}
+			return isPetitionSign;  
+    }
 }
