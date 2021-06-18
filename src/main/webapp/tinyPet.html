@@ -44,7 +44,6 @@
     border-color: #e7e7e7;
     }
     .navbar-static-top {
-    z-index: 1000;
     border-width: 0 0 1px;
     }       
  </style>
@@ -196,7 +195,7 @@ var navbar={
   view: function() {
    	return m('div', [
            m("div", {},m(navbar)),
-	  m('div',"Le top 100 des pétitions"),
+	  m('div',{}, "Le top 100 des pétitions"),
 	  m('table', {class:'table is-striped'},[
 	    m('tr', [
           m('th', {width:"300px"}, "propriétaire"),
@@ -224,7 +223,8 @@ var navbar={
 var UserListPetitionView = {
 		  view: function() {
 		   	return m('div', [
-			  m('div',{class:'subtitle'},"Petition signée par vous"),
+              m('div',{}, m(navbar)),
+			  m('div',{},"Petition signée par vous"),
 			  m('table', {class:'table is-striped'},[
 			    m('tr', [
                   m('th', {width:"200px"}, "titre"),
@@ -271,7 +271,7 @@ m.route(document.body, "/home", {
       }},
        "/myPet" : { onmatch: function(){
 		  if (Petition.ID=="") {m.route.set("/login")}
-      	  else return UserPetitionListView
+      	  else return UserListPetitionView
 	  }},
   "/login": Login
 }) 
