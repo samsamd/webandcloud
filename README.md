@@ -10,3 +10,5 @@ Voici la liste des fonctionnalités présentes et fonctionnelles :
 
 
 
+Le schéma des données est le suivant :
+![image](https://user-images.githubusercontent.com/43376319/122567873-717adf00-d049-11eb-917c-ea002ef8b392.png)
