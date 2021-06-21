@@ -55,6 +55,7 @@
     <script>
 
 var navbar={
+        searchtag:null,
 		view: function() {
 			return m('div', [
 				m('nav',{class:'navbar navbar-default navbar-static-top'},
@@ -80,9 +81,30 @@ var navbar={
 							      		location.reload();
 							    	})
 							    }}
-								,"Déconnexion")),
-						)
-				),	
+                                ,"Déconnexion")),
+                                //Début barre de recherche
+                            m("li",{},m('div',[m('input[type=search][placeholder=Recherche via un tag]',{
+                                class: 'input is-rounded',
+                                id: 'search',
+                                oninput : function(e) {
+                                    navbar.searchtag = e.target.value
+                                }
+                            }),
+                            m('button', {
+                                class :'button',
+                                onclick : function() {
+                                    if(navbar.searchtag==null) {
+                                        alert("Veuillez renseignez un tag !");
+                                    } else {
+                                    Petition.search(navbar.searchtag),
+                                    navbar.searchtag=null
+                                }
+                                }
+                            },"Search")])    
+                        )
+                        //Fin barre de recherche
+                    )
+                )	
 			])
 		}
 }
@@ -91,6 +113,7 @@ var navbar={
   titre : ' ',
   body : ' ',
   owner : ' ',
+  tag:'',
   User : ' ',
  }
     var NewPetitionView={
@@ -115,12 +138,20 @@ var navbar={
 						 oninput: function (e) {
 							 CreatePetition.body=e.target.value},
 						 }),
-			        m('br'),
+                    m('br'),
+                    m("label",{for:"tag"},"Tag :"),
+                    m("input[type=text][placeholder=Tag]", {
+						class: 'input is-rounded',
+						id: 'tag',
+						 oninput: function (e) {
+							 CreatePetition.tag=e.target.value},
+                         }),
+                    m('br'),
 					m('button',{
 						class: 'button',
 						onclick: function(e) {
 							if(document.getElementById('titre').value=="" || document.getElementById('description').value=="" ){
-								alert("Veuillez remplir tous les champs !");
+								alert("Veuillez renseigner le titre et la description !");
 							}
 							else Petition.save();
 						}
@@ -134,7 +165,8 @@ var navbar={
 		ID:"",
 		nextToken:"",
 	    listtop100: [],
-	    listowner: [],
+        listowner: [],
+        listpetitiontag: [],
 	    loadList: function() {
 	        return m.request({
 	            method: "GET",
@@ -154,10 +186,10 @@ var navbar={
 	            Petition.listowner = result.items
 	        	console.log("got:",result.items)
 	        })
-	    },
+        },
 	    save: function() {
 	    	console.log("saving...",CreatePetition.current)
-	    	var data={'titre': CreatePetition.titre,'body':CreatePetition.body}
+	    	var data={'titre': CreatePetition.titre,'body':CreatePetition.body, 'tag' : CreatePetition.tag}
 	        return m.request({
 	            method: "POST",
 	            url: "_ah/api/myApi/v1/addPetition"+'?access_token='+encodeURIComponent(Petition.ID),
@@ -185,9 +217,22 @@ var navbar={
 	        	else{
 	        		alert("Vous avez déjà signé cette pétition");
                 }
-                m.route.set("/home")
 	        })
-	    },
+        },
+        search : function(tag) {
+            console.log("searching...", tag)
+            var data={'tag':tag}
+            return m.request({
+                method: "GET",
+                url : "_ah/api/myApi/v1/entitycollection/"+tag,
+                params: data,
+            })
+            .then(function(result) {
+                console.log("got:",result)
+                Petition.listpetitiontag = result.items
+                m.route.set("/petitionByTag")
+            })
+        }
     }
     
     var ListPetitionView = {
@@ -201,6 +246,7 @@ var navbar={
           m('th', {width:"300px"}, "propriétaire"),
           m('th', {width:"300px"}, "titre"),
           m('th', {width:"300px"}, "description"),
+          m('th', {width:"300px"}, "tag"),
 	      m('th', {width:"150px"}, "nombre de signatures"),
 	      m('th', {width:"60px"}, "signer ?"),
 	    ]),
@@ -209,6 +255,7 @@ var navbar={
             m('td', m('label', item.properties.owner)),
             m('td', m('label', item.properties.titre)),
             m('td', m('label', item.properties.body)),
+            m('td', m('label', item.properties.tag)),
 	        m('td', m('label', item.properties.nbSignatory)),
 	        m('button',{
 				class: 'button is-link',
@@ -229,12 +276,14 @@ var UserListPetitionView = {
 			    m('tr', [
                   m('th', {width:"200px"}, "titre"),
                   m('th', {width:"200px"}, "description"),
+                  m('th', {width:"200px"}, "tag"),
 			      m('th', {width:"50px"}, "nombre de signatures"),
 			    ]),
 			    Petition.listowner.map(function(item) {
 			      return m("tr", [
                       m('td', m('label', item.properties.titre)),
                       m('td', m('label', item.properties.body)),
+                      m('td', m('label', item.properties.tag)),
 			        m('td', m('label', item.properties.nbSignatory)), 
 			      ])
 			    })
@@ -242,6 +291,31 @@ var UserListPetitionView = {
 			 ])
 		  }
         } 
+
+        var ListPetitionByTagView = {
+		  view: function() {
+		   	return m('div', [
+              m('div',{}, m(navbar)),
+			  m('div',{},"Petitions trouvée via le tag recherché"),
+			  m('table', {class:'table is-striped'},[
+			    m('tr', [
+                  m('th', {width:"200px"}, "titre"),
+                  m('th', {width:"200px"}, "description"),
+                  m('th', {width:"200px"}, "tag"),
+			      m('th', {width:"50px"}, "nombre de signatures"),
+			    ]),
+			    Petition.listpetitiontag.map(function(item) {
+			      return m("tr", [
+                      m('td', m('label', item.properties.titre)),
+                      m('td', m('label', item.properties.body)),
+                      m('td', m('label', item.properties.tag)),
+			        m('td', m('label', item.properties.nbSignatory)), 
+			      ])
+			    })
+			   ])
+			 ])
+		  }
+        }
 
 function onSignIn(googleUser) {
   var profile = googleUser.getBasicProfile();
@@ -272,7 +346,10 @@ m.route(document.body, "/home", {
        "/myPet" : { onmatch: function(){
 		  if (Petition.ID=="") {m.route.set("/login")}
       	  else return UserListPetitionView
-	  }},
+      }},
+      "/petitionByTag" : { onmatch: function() {
+         return ListPetitionByTagView
+      }},
   "/login": Login
 }) 
 

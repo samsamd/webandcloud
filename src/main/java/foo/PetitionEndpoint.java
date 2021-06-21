@@ -63,6 +63,7 @@ public class PetitionEndpoint {
 		e.setProperty("body", pm.body);
         e.setProperty("owner", owner.getEmail());
         e.setProperty("date", date);
+        e.setProperty("tag", pm.tag);
 				
 		//cree des signataire
 		ArrayList<String> fset = new ArrayList<String>();
@@ -101,6 +102,17 @@ public class PetitionEndpoint {
 		Query q = new Query("Petition").addSort("nbSignatory", SortDirection.DESCENDING);
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		PreparedQuery pq = datastore.prepare(q);
+		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(100));
+		return result;
+    }  
+
+    //Recupere les petitions en fonction du tag cherché
+    @ApiMethod(name = "getPetitionByTag", httpMethod = HttpMethod.GET)
+	public List<Entity> getPetitionByTag(@Named("tag") String tag) {
+		Query q = new Query("Petition").setFilter(new FilterPredicate("tag", FilterOperator.EQUAL, tag));
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        
+        PreparedQuery pq = datastore.prepare(q);
 		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(100));
 		return result;
     }  
